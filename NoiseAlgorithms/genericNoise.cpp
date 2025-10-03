@@ -1,4 +1,6 @@
 #include <random>
+#include <cstdint>
+#include <vector>
 
 class genericNoise {
 private:
@@ -23,6 +25,22 @@ public:
         for (int i = 0; i < width; i++) {
             noise[i] = new double[height];
         }
+    }
+
+    std::vector<unsigned char> getGrayscaleImageData() {
+        std::vector<unsigned char> pixels(width * height * 4);
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                //Set colors
+                pixels[(j * width + i) * 4 + 0] = static_cast<unsigned char>(noise[i][j] * 255); //RED
+                pixels[(j * width + i) * 4 + 0] = static_cast<unsigned char>(noise[i][j] * 255); //GREEN
+                pixels[(j * width + i) * 4 + 0] = static_cast<unsigned char>(noise[i][j] * 255); //BLUE
+                pixels[(j * width + i) * 4 + 0] = 255; //Alpha (opaque)
+            }
+        }
+
+        return pixels;
     }
 
     ~genericNoise() {

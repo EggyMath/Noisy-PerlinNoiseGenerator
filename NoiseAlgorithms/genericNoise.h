@@ -15,6 +15,8 @@ public:
 
     virtual void create(unsigned int width, unsigned int height, unsigned int seed);
 
+    std::vector<std::uint8_t> getGrayscaleImageData();
+
     ~genericNoise();
 
     double randomDouble();
