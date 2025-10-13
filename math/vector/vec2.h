@@ -1,5 +1,5 @@
 #ifndef VEC_2_H
-#define VEC_2_h
+#define VEC_2_H
 
 namespace math {
 
@@ -11,7 +11,7 @@ namespace math {
         float x; // X component
         float y; // Y component
 
-        /* Default constructor (0,0) */
+        // Default constructor (0,0)
         Vec2();
 
         // Construct using given x and y components
