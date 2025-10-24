@@ -1,8 +1,35 @@
 <!DOCTYPE html>
-
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebSocket++ Test</title>
+</head>
 <body>
-    <p>Hello World</p>
-    <!--comment example-->
-    <label for="quantity">Quantity:</label>
-    <input type="number" id="quantity" name="quantity" min="1" max="10">
+  <h2>WebSocket++ Test Client</h2>
+  <button id="sendBtn">Send Message</button>
+  <p id="status">Connecting...</p>
+  <p id="output"></p>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:9002");
+
+    ws.onopen = () => {
+      document.getElementById("status").innerText = "Connected";
+      console.log("Connected to C++ backend!");
+    };
+
+    ws.onmessage = (event) => {
+      console.log("Message from server:", event.data);
+      document.getElementById("output").innerText = event.data;
+    };
+
+    ws.onclose = () => {
+      document.getElementById("status").innerText = "Disconnected";
+    };
+
+    document.getElementById("sendBtn").onclick = () => {
+      ws.send("Test Message from Front-End");
+    };
+  </script>
 </body>
+</html>
