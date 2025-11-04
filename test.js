@@ -8,11 +8,29 @@ ws.onopen = function () {
     statusEl.textContent = "Connected!";
 };
 
-ws.onmessage = function (event) {
-    console.log("Message from server: ", event.data);
-    var output = document.getElementById("output");
-    if (output)
-        output.textContent = event.data;
+const canvas = document.getElementById("noiseCanvas");
+const ctx = canvas.getContext("2d");
+
+ws.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
+    if (msg.width && msg.height && msg.data) {
+      const imgData = ctx.createImageData(msg.width, msg.height);
+      for (let i = 0; i < msg.data.length; i++) {
+        const v = msg.data[i];
+        const j = i * 4;
+        imgData.data[j] = v;     // R
+        imgData.data[j + 1] = v; // G
+        imgData.data[j + 2] = v; // B
+        imgData.data[j + 3] = 255; // A
+      }
+      ctx.putImageData(imgData, 0, 0);
+    } else {
+      console.log("Received:", msg);
+    }
+  } catch (e) {
+    console.error("Invalid message:", e);
+  }
 };
 
 ws.onerror = function (err) {

@@ -1,5 +1,8 @@
 #include <random>
 
+#ifndef GENERICNOISE
+#define GENERICNOISE
+
 class genericNoise {
 private:
     std::mt19937 gen;
@@ -11,13 +14,15 @@ public:
     int width;
     int height;
 
-    genericNoise() : dist(0.0, 1.0) {}
+    genericNoise();
 
     virtual void create(unsigned int width, unsigned int height, unsigned int seed);
 
-    std::vector<std::uint8_t> getGrayscaleImageData();
+    std::string noiseToJson();
 
     ~genericNoise();
 
     double randomDouble();
 };
+
+#endif

@@ -5,6 +5,9 @@
 #include <set>
 #include <string>
 
+#include "NoiseAlgorithms/genericNoise.h"
+#include "NoiseAlgorithms/whiteNoise.h"
+
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 class WebSocketServer {
@@ -52,8 +55,18 @@ private:
         std::string payload = msg->get_payload();
         std::cout << "Message received: " << payload << std::endl;
 
+        if (payload == "whiteNoise") {
+            whiteNoise wn;
+            wn.create(128, 128, static_cast<unsigned int>(time(nullptr)));
+
+            std::string json = wn.noiseToJson();
+
+            m_server.send(hdl, json, websocketpp::frame::opcode::text);
+        }
         std::string response = "Recieved message: " + payload;
         m_server.send(hdl, response, msg->get_opcode());
+        //int response = 1234;
+        //m_server.send(hdl, response, msg->get_opcode());
     }
 };
 
