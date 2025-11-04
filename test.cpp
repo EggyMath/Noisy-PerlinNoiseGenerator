@@ -57,7 +57,7 @@ private:
 
         if (payload == "whiteNoise") {
             whiteNoise wn;
-            wn.create(128, 128, static_cast<unsigned int>(time(nullptr)));
+            wn.create(128, 128, 0);
 
             std::string json = wn.noiseToJson();
 
@@ -65,8 +65,6 @@ private:
         }
         std::string response = "Recieved message: " + payload;
         m_server.send(hdl, response, msg->get_opcode());
-        //int response = 1234;
-        //m_server.send(hdl, response, msg->get_opcode());
     }
 };
 

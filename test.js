@@ -17,14 +17,16 @@ ws.onmessage = (event) => {
     if (msg.width && msg.height && msg.data) {
       const imgData = ctx.createImageData(msg.width, msg.height);
       for (let i = 0; i < msg.data.length; i++) {
-        const v = msg.data[i];
+        const v = msg.data[i] * 255;
         const j = i * 4;
-        imgData.data[j] = v;     // R
-        imgData.data[j + 1] = v; // G
-        imgData.data[j + 2] = v; // B
-        imgData.data[j + 3] = 255; // A
+        imgData.data[j + 0] = v;    // R
+        imgData.data[j + 1] = v;    // G
+        imgData.data[j + 2] = v;    // B
+        imgData.data[j + 3] = 255;  // A
       }
       ctx.putImageData(imgData, 0, 0);
+
+      console.log("Received: Noise Image");
     } else {
       console.log("Received:", msg);
     }
@@ -42,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sendBtn) {
         sendBtn.addEventListener("click", function () {
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send("Test Message from Front-End");
+                ws.send("whiteNoise");
             }
             else {
                 console.warn("WebSocket not open yet");
