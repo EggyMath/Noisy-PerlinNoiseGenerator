@@ -4,7 +4,7 @@
 #define GENERICNOISE
 
 class genericNoise {
-private:
+protected:
     std::mt19937 gen;
     std::uniform_real_distribution<double> dist;
 
@@ -15,6 +15,7 @@ public:
     int height;
 
     genericNoise();
+    genericNoise(const genericNoise& startNoise, double cutOff);
 
     virtual void create(unsigned int width, unsigned int height, unsigned int seed);
 

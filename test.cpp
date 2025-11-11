@@ -59,7 +59,8 @@ private:
             whiteNoise wn;
             wn.create(128, 128, 0);
 
-            std::string json = wn.noiseToJson();
+            genericNoise modNoise(wn, 0.5);
+            std::string json = modNoise.noiseToJson();
 
             m_server.send(hdl, json, websocketpp::frame::opcode::text);
         }
