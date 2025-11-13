@@ -27,7 +27,7 @@ namespace math {
         // Returns determinent
         float determinant() const;
 
-        // Returns inverse
+        // Returns inverse matrix
         Mat2 inverse() const;
 
         // Create a 2D rotation matrix
