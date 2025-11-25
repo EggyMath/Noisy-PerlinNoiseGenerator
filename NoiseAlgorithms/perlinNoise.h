@@ -2,8 +2,8 @@
 #define PERLIN_NOISE_H
 
 #include "genericNoise.h"
-#include "Vec2.h"
-#include "utils.h"
+#include "math/vector/vec2.h"
+#include "math/utils.h"
 
 enum class PerlinMode {
     BASIC,

@@ -11,27 +11,87 @@ ws.onopen = function () {
 const canvas = document.getElementById("noiseCanvas");
 const ctx = canvas.getContext("2d");
 
+const perlinCanvas = document.getElementById("perlinCanvas");
+const perlinCtx = perlinCanvas.getContext("2d");
+
 ws.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
-    if (msg.width && msg.height && msg.data) {
-      const imgData = ctx.createImageData(msg.width, msg.height);
-      for (let i = 0; i < msg.data.length; i++) {
-        const v = msg.data[i] * 255;
-        const j = i * 4;
-        imgData.data[j + 0] = v;    // R
-        imgData.data[j + 1] = v;    // G
-        imgData.data[j + 2] = v;    // B
-        imgData.data[j + 3] = 255;  // A
-      }
-      ctx.putImageData(imgData, 0, 0);
 
-      console.log("Received: Noise Image");
-    } else {
-      console.log("Received:", msg);
+    // Expecting { type: "...", payload: { width, height, data: [...] } }
+    if (!msg.type || !msg.payload) {
+      console.log("Non-image message:", msg);
+      return;
     }
+
+    const payload = msg.payload;
+
+    if (!(payload.width && payload.height && payload.data)) {
+      console.log("Invalid image payload:", payload);
+      return;
+    }
+
+    let imgData;
+    let ctxTarget;
+
+    if (msg.type === "white") {
+      imgData = ctx.createImageData(payload.width, payload.height);
+      ctxTarget = ctx;
+    } else if (msg.type === "perlin") {
+      imgData = perlinCtx.createImageData(payload.width, payload.height);
+      ctxTarget = perlinCtx;
+    } else {
+      console.log("Unknown type:", msg.type);
+      return;
+    }
+
+    for (let i = 0; i < payload.data.length; i++) {
+      const v = payload.data[i];
+      const j = i * 4;
+
+      if (msg.type === "white") {
+        const c = v * 255;
+        imgData.data[j + 0] = c;
+        imgData.data[j + 1] = c;
+        imgData.data[j + 2] = c;
+        imgData.data[j + 3] = 255;
+      } else if (msg.type === "perlin") {
+        // Terrain-style coloring
+        let r, g, b;
+
+        if (v < 0.35) {
+          r = 0;
+          g = 60;
+          b = 160 + (v * 60);
+        }
+        else if (v < 0.6) {
+          r = 50 + (v * 60);
+          g = 160 + (v * 40);
+          b = 60;
+        }
+        else if (v < 0.8) {
+          r = 120 + (v * 80);
+          g = 120 + (v * 80);
+          b = 120 + (v * 80);
+        }
+        else {
+          r = 220 + (v * 35);
+          g = 220 + (v * 35);
+          b = 220 + (v * 35);
+        }
+
+        imgData.data[j + 0] = r;
+        imgData.data[j + 1] = g;
+        imgData.data[j + 2] = b;
+        imgData.data[j + 3] = 255;
+      }
+    }
+
+    ctxTarget.putImageData(imgData, 0, 0);
+    console.log("Rendered:", msg.type);
+
   } catch (e) {
-    console.error("Invalid message:", e);
+    console.error("Invalid message:", e, "Raw:", event.data);
   }
 };
 

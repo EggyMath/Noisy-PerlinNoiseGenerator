@@ -7,6 +7,7 @@
 
 #include "NoiseAlgorithms/genericNoise.h"
 #include "NoiseAlgorithms/whiteNoise.h"
+#include "NoiseAlgorithms/perlinNoise.h"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -56,16 +57,28 @@ private:
         std::cout << "Message received: " << payload << std::endl;
 
         if (payload == "whiteNoise") {
+            // White noise
             whiteNoise wn;
             wn.create(128, 128, 0);
 
             genericNoise modNoise(wn, 0.5);
-            std::string json = modNoise.noiseToJson();
+            std::string whiteJson = "{ \"type\": \"white\", \"payload\": " + modNoise.noiseToJson() + " }";
 
-            m_server.send(hdl, json, websocketpp::frame::opcode::text);
+            m_server.send(hdl, whiteJson, websocketpp::frame::opcode::text);
+
+            // perlin texture
+            perlinNoise pn;
+            pn.create(128, 128, 40.0f, 1337, PerlinMode::FBM, 6, 2.0f, 0.5f, 10.0f);
+
+            std::string perlinJson = "{ \"type\": \"perlin\", \"payload\": " + pn.noiseToJson() + " }";
+
+            m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
+
+            return;
         }
-        std::string response = "Recieved message: " + payload;
-        m_server.send(hdl, response, msg->get_opcode());
+
+        std::string response = "{ \"type\": \"text\", \"payload\": \"Received: " + payload + "\" }";
+        m_server.send(hdl, response, websocketpp::frame::opcode::text);
     }
 };
 
