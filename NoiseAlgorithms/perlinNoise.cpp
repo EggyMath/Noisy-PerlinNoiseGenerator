@@ -1,11 +1,18 @@
 #include "perlinNoise.h"
 
-// Implements Gradient-based 2D Perlin Noise (Improved style)
-
 // Constructor
 perlinNoise::perlinNoise() : genericNoise() {}
 
-void perlinNoise::create(unsigned int width, unsigned int height, float scale, unsigned int seed) {
+// Generate perline Noise grid
+void perlinNoise::create(unsigned int width, 
+                         unsigned int height, 
+                         float scale, 
+                         unsigned int seed, 
+                         PerlinMode mode,
+                         int octaves,
+                         float lacunarity,
+                         float gain) {
+
     // Allocate memeory with base class
     genericNoise::create(width, height, seed);
 
@@ -18,11 +25,16 @@ void perlinNoise::create(unsigned int width, unsigned int height, float scale, u
             float sampleX = x / scale;
             float sampleY = y / scale;
 
-            noise[x][y] = perlin(sampleX, sampleY);
+            if (mode == PerlinMode::FBM) {
+                noise[x][y] = fbm(sampleX, sampleY, octaves, lacunarity, gain);
+            } else {
+                noise[x][y] = perlin(sampleX, sampleY);
+            }
         }
     }
 }
 
+// Generates Fractal Brownian Motion (FBM) noise using Perlin noise.
 float perlinNoise::fbm(float x, float y, int octaves, float lacunarity, float gain) const {
     float total = 0.0f;
     float amplitude = 1.0f;
@@ -38,6 +50,7 @@ float perlinNoise::fbm(float x, float y, int octaves, float lacunarity, float ga
     return math::clamp(total, 0.0f, 1.0f);
 }
 
+// Default: Implements Gradient-based 2D Perlin Noise (Improved style)
 float perlinNoise::perlin(float x, float y) const {
     // Find the grid square of the point
     int x0 = static_cast<int>(std::floor(x));

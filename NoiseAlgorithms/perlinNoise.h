@@ -5,6 +5,11 @@
 #include "Vec2.h"
 #include "utils.h"
 
+enum class PerlinMode {
+    BASIC,
+    FBM
+};
+
 // inherits from genericNoise
 class perlinNoise : public genericNoise {
     public:
@@ -22,13 +27,34 @@ class perlinNoise : public genericNoise {
          * This function creates a smooth, coherent noise field
          * using gradient-based Perlin noise. The "scale" determines
          * the frequency of the noise (larger = smoother, smaller = more detailed).
+         * 
+         * - BASIC: Uses a single octave of classic Perlin noise (smooth, blobby patterns)
+         * - FBM:   Uses Fractal Brownian Motion (multiple Perlin octaves layered together)
+         *          to create richer, more natural-looking detail
          *
+         * When using FBM mode, additional parameters control how the octaves
+         * are layered together:
+         *  - octaves:      Number of noise layers to combine
+         *  - lacunarity:   Frequency multiplier per octave (usually ~2.0)
+         *  - gain:         Amplitude multiplier per octave (usually ~0.5)
+         * 
          * @param width The width of the noise map in pixels
          * @param height The height of the noise map in pixels
-         * @param scale Controls the frequency of the noise (zoom level)
+         * @param scale Controls the frequency of the noise (larger = smoother)
          * @param seed Seed used for deterministic randomness
+         * @param mode Selects BASIC Perlin or FBM noise generation mode
+         * @param octaves Number of octaves used when mode == PerlinMode::FBM
+         * @param lacunarity Frequency multiplier used in FBM
+         * @param gain Amplitude scaling factor used in FBM
          */
-        void create(unsigned int width, unsigned int height, float scale, unsigned int seed);
+        void create(unsigned int width,
+            unsigned int height,
+            float scale,
+            unsigned int seed,
+            PerlinMode mode = PerlinMode::BASIC,
+            int octaves = 5,
+            float lacunarity = 2.0f,
+            float gain = 0.5f);
 
         /**
          * @brief Generates Fractal Brownian Motion (FBM) noise using Perlin noise.
