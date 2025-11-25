@@ -11,7 +11,8 @@ void perlinNoise::create(unsigned int width,
                          PerlinMode mode,
                          int octaves,
                          float lacunarity,
-                         float gain) {
+                         float gain,
+                         float warpStrength) {
 
     // Allocate memeory with base class
     genericNoise::create(width, height, seed);
@@ -25,11 +26,33 @@ void perlinNoise::create(unsigned int width,
             float sampleX = x / scale;
             float sampleY = y / scale;
 
-            if (mode == PerlinMode::FBM) {
-                noise[x][y] = fbm(sampleX, sampleY, octaves, lacunarity, gain);
-            } else {
-                noise[x][y] = perlin(sampleX, sampleY);
+            float value = 0.0f;
+
+            if (mode == PerlinMode::BASIC) {
+                value = perlin(sampleX, sampleY);
             }
+            else if (mode == PerlinMode::FBM) {
+                value = fbm(sampleX, sampleY, octaves, lacunarity, gain);
+            }
+            else if (mode == PerlinMode::RIDGED) {
+                float v = fbm(sampleX, sampleY, octaves, lacunarity, gain);
+
+                value = 1.0f - std::abs(v * 2.0f - 1.0f);
+            }
+            else if (mode == PerlinMode::TURBULENCE) {
+                value = std::abs(fbm(sampleX, sampleY, octaves, lacunarity, gain));
+            }
+            else if (mode == PerlinMode::DOMAIN_WARP) {
+                float qx = fbm(sampleX + 5.2f, sampleY + 1.3f, octaves, lacunarity, gain);
+                float qy = fbm(sampleX + 8.5f, sampleY + 2.8f, octaves, lacunarity, gain);
+
+                float warpedX = sampleX + warpStrength * qx;
+                float warpedY = sampleY + warpStrength * qy;
+
+                value = fbm(warpedX, warpedY, octaves, lacunarity, gain);
+            }
+
+            noise[x][y] = math::clamp(value, 0.0f, 1.0f);
         }
     }
 }

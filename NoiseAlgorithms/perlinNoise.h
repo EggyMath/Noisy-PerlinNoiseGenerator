@@ -7,7 +7,10 @@
 
 enum class PerlinMode {
     BASIC,
-    FBM
+    FBM,
+    RIDGED,
+    TURBULENCE,
+    DOMAIN_WARP
 };
 
 // inherits from genericNoise
@@ -28,15 +31,27 @@ class perlinNoise : public genericNoise {
          * using gradient-based Perlin noise. The "scale" determines
          * the frequency of the noise (larger = smoother, smaller = more detailed).
          * 
-         * - BASIC: Uses a single octave of classic Perlin noise (smooth, blobby patterns)
-         * - FBM:   Uses Fractal Brownian Motion (multiple Perlin octaves layered together)
-         *          to create richer, more natural-looking detail
+         *  - BASIC: Uses a single octave of classic Perlin noise
+         *    (smooth, blobby, low-detail patterns)
+         *  - FBM: Uses Fractal Brownian Motion (multiple layered Perlin
+         *    octaves) to create richer, more natural-looking detail
+         *  - RIDGED: Produces sharp, mountainous ridge-like patterns by
+         *    inverting and reshaping FBM output (ideal for terrain)
+         *  - TURBULENCE: Uses the absolute value of stacked Perlin noise to create
+         *    chaotic, high-contrast patterns (useful for fire, marble, etc.)
+         *  - DOMAIN_WARP: Warps the input coordinates using additional noise
+         *    before sampling, producing highly organic, swirling,
+         *    and distorted patterns
          *
          * When using FBM mode, additional parameters control how the octaves
          * are layered together:
          *  - octaves:      Number of noise layers to combine
          *  - lacunarity:   Frequency multiplier per octave (usually ~2.0)
          *  - gain:         Amplitude multiplier per octave (usually ~0.5)
+         * 
+         * For DOMAIN_WARP mode, an additional parameter controls how strongly
+         * the coordinates are distorted:
+         *  - warpStrength : Intensity of the coordinate warping effect
          * 
          * @param width The width of the noise map in pixels
          * @param height The height of the noise map in pixels
@@ -46,6 +61,7 @@ class perlinNoise : public genericNoise {
          * @param octaves Number of octaves used when mode == PerlinMode::FBM
          * @param lacunarity Frequency multiplier used in FBM
          * @param gain Amplitude scaling factor used in FBM
+         * @param warpStrength  Strength of coordinate warping (used in DOMAIN_WARP)
          */
         void create(unsigned int width,
             unsigned int height,
@@ -54,7 +70,8 @@ class perlinNoise : public genericNoise {
             PerlinMode mode = PerlinMode::BASIC,
             int octaves = 5,
             float lacunarity = 2.0f,
-            float gain = 0.5f);
+            float gain = 0.5f,
+            float warpStrength = 10.0f);
 
         /**
          * @brief Generates Fractal Brownian Motion (FBM) noise using Perlin noise.
