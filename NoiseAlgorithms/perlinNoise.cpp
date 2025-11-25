@@ -23,6 +23,21 @@ void perlinNoise::create(unsigned int width, unsigned int height, float scale, u
     }
 }
 
+float perlinNoise::fbm(float x, float y, int octaves, float lacunarity, float gain) const {
+    float total = 0.0f;
+    float amplitude = 1.0f;
+    float frequency = 1.0f;
+
+    for (int i = 0; i < octaves; i++) {
+        total = total + perlin(x * frequency, y * frequency) * amplitude;
+
+        frequency = frequency * lacunarity;
+        amplitude = amplitude * gain;
+    }
+
+    return math::clamp(total, 0.0f, 1.0f);
+}
+
 float perlinNoise::perlin(float x, float y) const {
     // Find the grid square of the point
     int x0 = static_cast<int>(std::floor(x));

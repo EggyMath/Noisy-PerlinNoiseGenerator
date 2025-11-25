@@ -29,6 +29,25 @@ class perlinNoise : public genericNoise {
          * @param seed Seed used for deterministic randomness
          */
         void create(unsigned int width, unsigned int height, float scale, unsigned int seed);
+
+        /**
+         * @brief Generates Fractal Brownian Motion (FBM) noise using Perlin noise.
+         * 
+         * This function layers (stacks) multiple octaves of Perlin noise at
+         * increasing frequencies and decreasing amplitudes. Each successive
+         * octave adds finer detail while contributing less to the final value.
+         * 
+         * This creates a more complex, natural-looking pattern compared to
+         * standard Perlin noise, which only contains a single frequency layer.
+         * 
+         * @param x Continuous x coordinate
+         * @param y Continuous y coordinate
+         * @param octaves Number of Perlin layers to combine
+         * @param lacunarity Controls how quickly frequency increases per octave
+         * @param gain Controls how quickly amplitude decreases per octave
+         * @return A smooth noise value in the range [0, 1]
+         */
+        float fbm(float x, float y, int octaves, float lacunarity, float gain) const;
     private:
         /**
          * @brief Computes the Perlin noise value at a given (x, y) coordinate.
