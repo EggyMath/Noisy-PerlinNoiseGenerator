@@ -10,7 +10,8 @@ enum class PerlinMode {
     FBM,
     RIDGED,
     TURBULENCE,
-    DOMAIN_WARP
+    DOMAIN_WARP,
+    BILLOW
 };
 
 // inherits from genericNoise
@@ -42,6 +43,9 @@ class perlinNoise : public genericNoise {
          *  - DOMAIN_WARP: Warps the input coordinates using additional noise
          *    before sampling, producing highly organic, swirling,
          *    and distorted patterns
+         *  - BILLOW: Applies a rounded shaping function to FBM output,
+         *    creating soft, puffy, cloud-like formations
+         *    (ideal for clouds, fog, rolling hills, or stylized terrain)
          *
          * When using FBM mode, additional parameters control how the octaves
          * are layered together:

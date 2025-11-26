@@ -53,6 +53,10 @@ void perlinNoise::create(unsigned int width,
 
                 value = fbm(warpedX, warpedY, octaves, lacunarity, gain);
             }
+            else if (mode == PerlinMode::BILLOW) {
+                float v = fbm(sampleX, sampleY, octaves, lacunarity, gain);
+                value = std::abs(v * 2.0f - 1.0f);
+            }
 
             minVal = std::min(minVal, value);
             maxVal = std::max(maxVal, value);

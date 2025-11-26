@@ -80,8 +80,25 @@ private:
             );
 
             std::string perlinJson = "{ \"type\": \"perlin\", \"payload\": " + pn.noiseToJson() + " }";
-            
+
             m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
+
+            // Cloud texture - Perlin - Billow
+            perlinNoise clouds;
+            clouds.create(
+                256, 256,
+                40.0f,
+                2024,
+                PerlinMode::BILLOW,
+                6,
+                2.0f,
+                0.5f,
+                0.0f
+            );
+
+            std::string cloudJson = "{ \"type\": \"clouds\", \"payload\": " + clouds.noiseToJson() + " }";
+
+            m_server.send(hdl, cloudJson, websocketpp::frame::opcode::text);
 
             return;
         }

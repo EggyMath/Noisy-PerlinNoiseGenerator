@@ -14,6 +14,9 @@ const ctx = canvas.getContext("2d");
 const perlinCanvas = document.getElementById("perlinCanvas");
 const perlinCtx = perlinCanvas.getContext("2d");
 
+const cloudCanvas = document.getElementById("cloudCanvas");
+const cloudCtx = cloudCanvas.getContext("2d");
+
 ws.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
@@ -40,6 +43,9 @@ ws.onmessage = (event) => {
     } else if (msg.type === "perlin") {
       imgData = perlinCtx.createImageData(payload.width, payload.height);
       ctxTarget = perlinCtx;
+    } else if (msg.type === "clouds") {
+      imgData = cloudCtx.createImageData(payload.width, payload.height);
+      ctxTarget = cloudCtx;
     } else {
       console.log("Unknown type:", msg.type);
       return;
@@ -90,6 +96,28 @@ ws.onmessage = (event) => {
           g = 220 + (v * 35);
           b = 220 + (v * 35);
         }
+
+        imgData.data[j + 0] = r;
+        imgData.data[j + 1] = g;
+        imgData.data[j + 2] = b;
+        imgData.data[j + 3] = 255;
+      } else if (msg.type === "clouds") {
+        let density = Math.min(Math.max((v - 0.35) * 1.8, 0), 1);
+
+        // Sky color
+        const skyR = 120;
+        const skyG = 180;
+        const skyB = 255;
+
+        // Cloud color
+        const cloudR = 255;
+        const cloudG = 255;
+        const cloudB = 255;
+
+        // Blend sky -> cloud smoothly using density
+        const r = skyR + density * (cloudR - skyR);
+        const g = skyG + density * (cloudG - skyG);
+        const b = skyB + density * (cloudB - skyB);
 
         imgData.data[j + 0] = r;
         imgData.data[j + 1] = g;
