@@ -68,10 +68,19 @@ private:
 
             // perlin texture
             perlinNoise pn;
-            pn.create(128, 128, 40.0f, 1337, PerlinMode::FBM, 6, 2.0f, 0.5f, 10.0f);
+            pn.create(
+                128, 128,
+                12.0f,
+                1337,
+                PerlinMode::FBM,
+                6,
+                2.2f,
+                0.5f,
+                0.0f
+            );
 
             std::string perlinJson = "{ \"type\": \"perlin\", \"payload\": " + pn.noiseToJson() + " }";
-
+            
             m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
 
             return;

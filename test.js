@@ -56,6 +56,17 @@ ws.onmessage = (event) => {
         imgData.data[j + 2] = c;
         imgData.data[j + 3] = 255;
       } else if (msg.type === "perlin") {
+        let min = 999;
+        let max = -999;
+
+        for (let i = 0; i < payload.data.length; i++) {
+          const v = payload.data[i];
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+
+        console.log("PERLIN RANGE -> min:", min, "max:", max);
+
         // Terrain-style coloring
         let r, g, b;
 

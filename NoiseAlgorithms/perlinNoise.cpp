@@ -1,3 +1,4 @@
+#include <iostream>
 #include "perlinNoise.h"
 
 // Constructor
@@ -13,13 +14,15 @@ void perlinNoise::create(unsigned int width,
                          float lacunarity,
                          float gain,
                          float warpStrength) {
-
-    // Allocate memeory with base class
+    // Allocate memory with base class
     genericNoise::create(width, height, seed);
 
     if (scale <= 0.0f) {
         scale = 0.0001f;
     }
+
+    float minVal = 999.0f;
+    float maxVal = -999.0f;
 
     for (int y = 0; y < static_cast<int>(height); y++) {
         for (int x = 0; x < static_cast<int>(width); x++) {
@@ -36,7 +39,6 @@ void perlinNoise::create(unsigned int width,
             }
             else if (mode == PerlinMode::RIDGED) {
                 float v = fbm(sampleX, sampleY, octaves, lacunarity, gain);
-
                 value = 1.0f - std::abs(v * 2.0f - 1.0f);
             }
             else if (mode == PerlinMode::TURBULENCE) {
@@ -46,15 +48,28 @@ void perlinNoise::create(unsigned int width,
                 float qx = fbm(sampleX + 5.2f, sampleY + 1.3f, octaves, lacunarity, gain);
                 float qy = fbm(sampleX + 8.5f, sampleY + 2.8f, octaves, lacunarity, gain);
 
-                float warpedX = sampleX + warpStrength * qx;
-                float warpedY = sampleY + warpStrength * qy;
+                float warpedX = sampleX + (warpStrength * qx);
+                float warpedY = sampleY + (warpStrength * qy);
 
                 value = fbm(warpedX, warpedY, octaves, lacunarity, gain);
             }
 
-            noise[x][y] = math::clamp(value, 0.0f, 1.0f);
+            minVal = std::min(minVal, value);
+            maxVal = std::max(maxVal, value);
+
+            noise[x][y] = value;
         }
     }
+
+    float range = maxVal - minVal;
+
+    for (int y = 0; y < (int)height; y++) {
+        for (int x = 0; x < (int)width; x++) {
+            noise[x][y] = (noise[x][y] - minVal) / range;
+        }
+    }
+
+    std::cout << "PERLIN RANGE -> min: " << minVal << " max: " << maxVal << std::endl;
 }
 
 // Generates Fractal Brownian Motion (FBM) noise using Perlin noise.
@@ -70,7 +85,8 @@ float perlinNoise::fbm(float x, float y, int octaves, float lacunarity, float ga
         amplitude = amplitude * gain;
     }
 
-    return math::clamp(total, 0.0f, 1.0f);
+    //return math::clamp(total, 0.0f, 1.0f);
+    return total;
 }
 
 // Default: Implements Gradient-based 2D Perlin Noise (Improved style)
