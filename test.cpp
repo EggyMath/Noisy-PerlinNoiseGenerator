@@ -112,6 +112,21 @@ private:
             std::string waterJson = "{ \"type\": \"water\", \"payload\": " + water.noiseToJson() + " }";
             m_server.send(hdl, waterJson, websocketpp::frame::opcode::text);
 
+            perlinNoise gas;
+            gas.create(
+                512, 512,
+                150.0f,
+                9999,
+                PerlinMode::DOMAIN_WARP,
+                6,
+                2.5f,
+                0.45f,
+                4.0f
+            );
+
+            std::string gasJson = "{ \"type\": \"gas\", \"payload\": " + gas.noiseToJson() + " }";
+            m_server.send(hdl, gasJson, websocketpp::frame::opcode::text);
+
             return;
         }
 

@@ -20,6 +20,9 @@ const cloudCtx = cloudCanvas.getContext("2d");
 const waterCanvas = document.getElementById("waterCanvas");
 const waterCtx = waterCanvas.getContext("2d");
 
+const alienCanvas = document.getElementById("gasCanvas");
+const alienCtx = alienCanvas.getContext("2d");
+
 ws.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
@@ -52,6 +55,9 @@ ws.onmessage = (event) => {
     } else if (msg.type === "water") {
       imgData = waterCtx.createImageData(payload.width, payload.height);
       ctxTarget = waterCtx;
+    } else if (msg.type === "gas") {
+        imgData = alienCtx.createImageData(payload.width, payload.height);
+        ctxTarget = alienCtx;
     } else {
       console.log("Unknown type:", msg.type);
       return;
@@ -161,6 +167,51 @@ ws.onmessage = (event) => {
         }
 
         // Clamp
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
+
+        imgData.data[j + 0] = r;
+        imgData.data[j + 1] = g;
+        imgData.data[j + 2] = b;
+        imgData.data[j + 3] = 255;
+      } else if (msg.type === "gas") {
+        const x = i % payload.width;
+        const y = Math.floor(i / payload.width);
+        const j = i * 4;
+
+        // v is 0..1 - soften contrast a bit
+        let t = Math.pow(v, 0.8);
+
+        // Base gas color (purple / magenta)
+        let r = 60 + t * 160;
+        let g = 20 + t * 60;
+        let b = 120 + t * 120;
+
+        // Horizontal banding
+        const bandAngle = (y / payload.height) * Math.PI * 4.0 + t * 3.0;
+        const band = Math.sin(bandAngle);
+        const bandFactor = 0.25 * band;
+
+        r += bandFactor * 60;
+        g += bandFactor * 30;
+        b += bandFactor * 80;
+
+        // Bright storm cores on very high density
+        if (t > 0.88) {
+          const core = (t - 0.88) / 0.12;
+          r = 230 + core * 25;
+          g = 110 + core * 120;
+          b = 245 + core * 10;
+        }
+
+        // Prevent super dark holes (no near-black)
+        const minR = 30, minG = 15, minB = 40;
+        r = Math.max(r, minR);
+        g = Math.max(g, minG);
+        b = Math.max(b, minB);
+
+        // Clamp to [0, 255]
         r = Math.min(255, Math.max(0, r));
         g = Math.min(255, Math.max(0, g));
         b = Math.min(255, Math.max(0, b));
