@@ -1,0 +1,7 @@
+#include "simplexNoise.h"
+
+static const math::Vec2 gradients[8] = {
+    { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 },
+    { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+};
+
