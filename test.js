@@ -17,6 +17,9 @@ const perlinCtx = perlinCanvas.getContext("2d");
 const cloudCanvas = document.getElementById("cloudCanvas");
 const cloudCtx = cloudCanvas.getContext("2d");
 
+const waterCanvas = document.getElementById("waterCanvas");
+const waterCtx = waterCanvas.getContext("2d");
+
 ws.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
@@ -46,6 +49,9 @@ ws.onmessage = (event) => {
     } else if (msg.type === "clouds") {
       imgData = cloudCtx.createImageData(payload.width, payload.height);
       ctxTarget = cloudCtx;
+    } else if (msg.type === "water") {
+      imgData = waterCtx.createImageData(payload.width, payload.height);
+      ctxTarget = waterCtx;
     } else {
       console.log("Unknown type:", msg.type);
       return;
@@ -118,6 +124,46 @@ ws.onmessage = (event) => {
         const r = skyR + density * (cloudR - skyR);
         const g = skyG + density * (cloudG - skyG);
         const b = skyB + density * (cloudB - skyB);
+
+        imgData.data[j + 0] = r;
+        imgData.data[j + 1] = g;
+        imgData.data[j + 2] = b;
+        imgData.data[j + 3] = 255;
+      } else if (msg.type === "water") {
+        const x = i % payload.width;
+        const y = Math.floor(i / payload.width);
+        const depth = y / payload.height;
+
+        // Normalize wave to [-1,1] then soften it
+        const wave = (v - 0.5) * 2.0;
+        const smoothWave = Math.sin(wave * Math.PI * 0.5);
+
+        // Deep -> Shallow gradient
+        const deep = { r: 8,  g: 30,  b: 70 };
+        const mid  = { r: 15, g: 80,  b: 150 };
+        const top  = { r: 60, g: 140, b: 200 };
+
+        // Vertical depth blend
+        let r = deep.r * depth + top.r * (1 - depth);
+        let g = deep.g * depth + top.g * (1 - depth);
+        let b = deep.b * depth + top.b * (1 - depth);
+
+        // Wave lighting
+        let light = 0.85 + smoothWave * 0.25;
+        r *= light;
+        g *= light;
+        b *= light;
+
+        if (v > 0.92) {
+          r += 20;
+          g += 25;
+          b += 30;
+        }
+
+        // Clamp
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
 
         imgData.data[j + 0] = r;
         imgData.data[j + 1] = g;

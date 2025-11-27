@@ -1,6 +1,7 @@
 #include "simplexNoise.h"
 #include <algorithm>
 #include <random>
+#include <iostream>
 
 static const math::Vec2 gradients[8] = {
     { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 },
@@ -47,11 +48,19 @@ void simplexNoise::create(unsigned int width,
         }
     }
 
+    float range = maxVal - minVal;
+
+    if (range == 0.0f) {
+        range = 0.00001f;
+    }
+
     for (int y = 0; y < (int)height; y++) {
         for (int x = 0; x < (int)width; x++) {
-            noise[x][y] = (noise[x][y] - minVal) / (maxVal - minVal);
+            noise[x][y] = (noise[x][y] - minVal) / range;
         }
     }
+
+    std::cout << "SIMPLEX RANGE -> min: " << minVal << " max: " << maxVal << std::endl;
 }
 
 float simplexNoise::fbm(float x, float y, int octaves, float lacunarity, float gain) const {

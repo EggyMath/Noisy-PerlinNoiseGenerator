@@ -100,13 +100,13 @@ private:
             m_server.send(hdl, cloudJson, websocketpp::frame::opcode::text);
 
             simplexNoise water;
-            water.create(
-                256, 256,
-                45.0f,
-                9999,
-                6,
-                2.0f,
-                0.55f
+            water.create(256, 
+                         256, 
+                         40.0f, 
+                         1337, 
+                         6, 
+                         2.0f, 
+                         0.5f
             );
 
             std::string waterJson = "{ \"type\": \"water\", \"payload\": " + water.noiseToJson() + " }";
