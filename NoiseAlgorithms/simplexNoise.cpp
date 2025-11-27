@@ -1,4 +1,6 @@
 #include "simplexNoise.h"
+#include <algorithm>
+#include <random>
 
 static const math::Vec2 gradients[8] = {
     { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 },
@@ -6,6 +8,65 @@ static const math::Vec2 gradients[8] = {
 };
 
 simplexNoise::simplexNoise() : genericNoise() {}
+
+void simplexNoise::create(unsigned int width,
+                          unsigned int height,
+                          float scale,
+                          unsigned int seed,
+                          int octaves,
+                          float lacunarity,
+                          float gain)
+{
+    genericNoise::create(width, height, seed);
+
+    generatePermutation(seed);
+
+    if (scale <= 0.0f) {
+        scale = 0.001f;
+    }
+
+    float minVal = 9999.0f;
+    float maxVal = -9999.0f;
+
+    for (int y = 0; y < (int)height; y++) {
+        for (int x = 0; x < (int)width; x++) {
+            float nx = x / scale;
+            float ny = y / scale;
+
+            float value = fbm(nx, ny, octaves, lacunarity, gain);
+
+            noise[x][y] = value;
+
+            if (value < minVal) {
+                minVal = value;
+            }
+
+            if (value > maxVal) {
+                maxVal = value;
+            }
+        }
+    }
+
+    for (int y = 0; y < (int)height; y++) {
+        for (int x = 0; x < (int)width; x++) {
+            noise[x][y] = (noise[x][y] - minVal) / (maxVal - minVal);
+        }
+    }
+}
+
+float simplexNoise::fbm(float x, float y, int octaves, float lacunarity, float gain) const {
+    float total = 0.0f;
+    float freq = 1.0f;
+    float amp = 1.0f;
+
+    for (int i = 0; i < octaves; i++) {
+        total += simplex(x * freq, y * freq) * amp;
+        freq *= lacunarity;
+        amp *= gain;
+    }
+
+    return total;
+}
 
 float simplexNoise::simplex(float x, float y) const {
     const float F2 = 0.366025403f; // (sqrt(3) - 1) / 2

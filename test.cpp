@@ -8,6 +8,7 @@
 #include "NoiseAlgorithms/genericNoise.h"
 #include "NoiseAlgorithms/whiteNoise.h"
 #include "NoiseAlgorithms/perlinNoise.h"
+#include "NoiseAlgorithms/simplexNoise.h"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -80,7 +81,6 @@ private:
             );
 
             std::string perlinJson = "{ \"type\": \"perlin\", \"payload\": " + pn.noiseToJson() + " }";
-
             m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
 
             // Cloud texture - Perlin - Billow
@@ -97,8 +97,20 @@ private:
             );
 
             std::string cloudJson = "{ \"type\": \"clouds\", \"payload\": " + clouds.noiseToJson() + " }";
-
             m_server.send(hdl, cloudJson, websocketpp::frame::opcode::text);
+
+            simplexNoise water;
+            water.create(
+                256, 256,
+                45.0f,
+                9999,
+                6,
+                2.0f,
+                0.55f
+            );
+
+            std::string waterJson = "{ \"type\": \"water\", \"payload\": " + water.noiseToJson() + " }";
+            m_server.send(hdl, waterJson, websocketpp::frame::opcode::text);
 
             return;
         }

@@ -4,6 +4,6 @@ Make sure to have Boost Asio installed. Can be done via:
     sudo apt update
     sudo apt install libboost-all-dev
 Compiling & Running use Ubuntu or the like:
-    g++ test.cpp NoiseAlgorithms/genericNoise.cpp NoiseAlgorithms/whiteNoise.cpp NoiseAlgorithms/perlinNoise.cpp math/*.cpp math/vector/*.cpp -I include -I . -std=c++17 -pthread -lboost_system -o ws_server
+    g++ test.cpp NoiseAlgorithms/genericNoise.cpp NoiseAlgorithms/whiteNoise.cpp NoiseAlgorithms/perlinNoise.cpp NoiseAlgorithms/simplexNoise.cpp math/*.cpp math/vector/*.cpp -I include -I . -std=c++17 -pthread -lboost_system -o ws_server
     ./ws_server
     Then just run the website however
