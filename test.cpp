@@ -58,24 +58,47 @@ private:
         std::cout << "Message received: " << payload << std::endl;
         
         std::string command = getValue(payload, "CMD");
-        std::cout<<"Commnad: "<<command<<std::endl;
+        std::cout<<"Command: "<<command<<std::endl;
+
+        unsigned int seed = 0;
+        if (getValue(payload,"seed").size() > 0)
+            seed = std::stoul(getValue(payload,"seed"));
 
         if (command == "whiteNoise") {
             std::cout<<"White Noise Requested"<<std::endl;
             whiteNoise wn;
-            wn.create(128, 128, 0);
+            wn.create(256, 256, seed);
 
             std::string whiteJson = "{ \"type\": \"white\", \"payload\": " + wn.noiseToJson() + " }";
 
             m_server.send(hdl, whiteJson, websocketpp::frame::opcode::text);
         } else if (command == "perlinNoise") {
             std::cout<<"Perlin Noise Requested"<<std::endl;
+
+            // Default Params
+            float scale = 12.0f;
+            PerlinMode mode = PerlinMode::FBM;
+
+            // Command Parse
+            if (getValue(payload,"scale").size() > 0)
+                scale = std::stof(getValue(payload,"scale"));
+            if (getValue(payload,"type").size() > 0) {
+                std::string t = getValue(payload,"type");
+                if (t == "normal") mode = PerlinMode::BASIC;
+                else if (t == "fbm") mode = PerlinMode::FBM;
+                else if (t == "ridged") mode = PerlinMode::RIDGED;
+                else if (t == "turbulence") mode = PerlinMode::TURBULENCE;
+                else if (t == "domainWarp") mode = PerlinMode::DOMAIN_WARP;
+                else if (t == "billow") mode = PerlinMode::BILLOW;
+            }
+            std::cout<<"Info: "<<seed<<", "<<scale<<std::endl;
+
             perlinNoise pn;
             pn.create(
-                128, 128,
-                12.0f,
-                1337,
-                PerlinMode::FBM,
+                256, 256,
+                scale,
+                seed,
+                mode,
                 6,
                 2.2f,
                 0.5f,
@@ -86,14 +109,22 @@ private:
             m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
         } else if (command == "simplexNoise") {
             std::cout<<"Simplex Noise Requested"<<std::endl;
+
+            // Default Params
+            float scale = 12.0f;
+
+            // Command Parse
+            if (getValue(payload,"scale").size() > 0)
+                scale = std::stof(getValue(payload,"scale"));
+
             simplexNoise simplex;
-            simplex.create(256, 
-                         256, 
-                         40.0f, 
-                         1337, 
-                         6, 
-                         2.0f, 
-                         0.5f
+            simplex.create(
+                256, 256, 
+                scale, 
+                seed, 
+                6, 
+                2.0f, 
+                0.5f
             );
 
             std::string simplexJson = "{ \"type\": \"simplex\", \"payload\": " + simplex.noiseToJson() + " }";

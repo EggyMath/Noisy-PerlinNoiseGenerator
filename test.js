@@ -243,15 +243,69 @@ ws.onerror = function (err) {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-    var sendBtn = document.getElementById("sendBtn");
-    if (sendBtn) {
-        sendBtn.addEventListener("click", function () {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send("CMD:perlinNoise;");
-            }
-            else {
-                console.warn("WebSocket not open yet");
-            }
-        });
+  var sendBtn = document.getElementById("sendBtn");
+  var noiseSelect = document.getElementById("noiseSelect");
+  var seedInput = document.getElementById("seedInput");
+  var scaleInput = document.getElementById("scaleInput");
+  var perlinOptions = document.getElementById("perlinOptions");
+
+  if (sendBtn) {
+      sendBtn.addEventListener("click", function () {
+      if (ws.readyState === WebSocket.OPEN) {
+        const selected = noiseSelect.value;
+        const seed = Number(seedInput.value) || 0;
+        const scale = Number(scaleInput.value) || 1.0;
+
+        let cmd = `CMD:${selected};seed:${seed};`;
+        if (selected !== "whiteNoise") {
+            cmd += `scale:${scale};`;
+        }
+        if (selected === "perlinNoise") {
+          const perlinType = document.getElementById("perlinTypeSelect").value;
+          cmd += `type:${perlinType};`;
+        }
+
+        ws.send(cmd);
+      } else {
+          console.warn("WebSocket not open yet");
+      }
+    });
+  }
+
+  function updateOptionsVisibility() {
+    if (noiseSelect.value === "perlinNoise") {
+      perlinOptions.style.display = "block";
+      scaleInput.parentElement.style.display = "block";
+    } else if (noiseSelect.value === "whiteNoise") {
+      perlinOptions.style.display = "none";
+      scaleInput.parentElement.style.display = "none";
+    } else {
+      perlinOptions.style.display = "none";
+      scaleInput.parentElement.style.display = "block";
     }
+  }
+
+  noiseSelect.addEventListener("change", updateOptionsVisibility);
+  updateOptionsVisibility();
 });
+
+const seedInput = document.getElementById('seedInput');
+const scaleInput = document.getElementById('scaleInput');
+
+function clampOnDone(input, min, max) {
+    function clamp() {
+        let v = Number(input.value);
+        if (isNaN(v)) v = min;
+        if (v < min) v = min;
+        if (v > max) v = max;
+        input.value = v;
+    }
+
+    input.addEventListener('blur', clamp);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') clamp();
+    });
+}
+
+clampOnDone(seedInput, 0, 4294967295);
+clampOnDone(scaleInput, 1.0, 50.0);
