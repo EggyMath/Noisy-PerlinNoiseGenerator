@@ -56,18 +56,20 @@ private:
     void on_message(connection_hdl hdl, server::message_ptr msg) {
         std::string payload = msg->get_payload();
         std::cout << "Message received: " << payload << std::endl;
+        
+        std::string command = getValue(payload, "CMD");
+        std::cout<<"Commnad: "<<command<<std::endl;
 
-        if (payload == "whiteNoise") {
-            // White noise
+        if (command == "whiteNoise") {
+            std::cout<<"White Noise Requested"<<std::endl;
             whiteNoise wn;
             wn.create(128, 128, 0);
 
-            genericNoise modNoise(wn, 0.5);
-            std::string whiteJson = "{ \"type\": \"white\", \"payload\": " + modNoise.noiseToJson() + " }";
+            std::string whiteJson = "{ \"type\": \"white\", \"payload\": " + wn.noiseToJson() + " }";
 
             m_server.send(hdl, whiteJson, websocketpp::frame::opcode::text);
-
-            // perlin texture
+        } else if (command == "perlinNoise") {
+            std::cout<<"Perlin Noise Requested"<<std::endl;
             perlinNoise pn;
             pn.create(
                 128, 128,
@@ -82,8 +84,36 @@ private:
 
             std::string perlinJson = "{ \"type\": \"perlin\", \"payload\": " + pn.noiseToJson() + " }";
             m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
+        } else if (command == "simplexNoise") {
+            std::cout<<"Simplex Noise Requested"<<std::endl;
+            simplexNoise simplex;
+            simplex.create(256, 
+                         256, 
+                         40.0f, 
+                         1337, 
+                         6, 
+                         2.0f, 
+                         0.5f
+            );
 
-            // Cloud texture - Perlin - Billow
+            std::string simplexJson = "{ \"type\": \"simplex\", \"payload\": " + simplex.noiseToJson() + " }";
+            m_server.send(hdl, simplexJson, websocketpp::frame::opcode::text);
+        } else if (command == "terrainNoise") {
+            perlinNoise pn;
+            pn.create(
+                128, 128,
+                12.0f,
+                1337,
+                PerlinMode::FBM,
+                6,
+                2.2f,
+                0.5f,
+                0.0f
+            );
+
+            std::string perlinJson = "{ \"type\": \"terrain\", \"payload\": " + pn.noiseToJson() + " }";
+            m_server.send(hdl, perlinJson, websocketpp::frame::opcode::text);
+        } else if (command == "cloudsNoise") {
             perlinNoise clouds;
             clouds.create(
                 256, 256,
@@ -98,7 +128,7 @@ private:
 
             std::string cloudJson = "{ \"type\": \"clouds\", \"payload\": " + clouds.noiseToJson() + " }";
             m_server.send(hdl, cloudJson, websocketpp::frame::opcode::text);
-
+        } else if (command == "waterNoise") {
             simplexNoise water;
             water.create(256, 
                          256, 
@@ -111,7 +141,7 @@ private:
 
             std::string waterJson = "{ \"type\": \"water\", \"payload\": " + water.noiseToJson() + " }";
             m_server.send(hdl, waterJson, websocketpp::frame::opcode::text);
-
+        } else if (command == "gasNoise") {
             perlinNoise gas;
             gas.create(
                 512, 512,
@@ -126,12 +156,23 @@ private:
 
             std::string gasJson = "{ \"type\": \"gas\", \"payload\": " + gas.noiseToJson() + " }";
             m_server.send(hdl, gasJson, websocketpp::frame::opcode::text);
-
-            return;
+        } else {
+            std::string response = "{ \"type\": \"text\", \"payload\": \"Received: " + payload + "\" }";
+            m_server.send(hdl, response, websocketpp::frame::opcode::text);
         }
+    }
 
-        std::string response = "{ \"type\": \"text\", \"payload\": \"Received: " + payload + "\" }";
-        m_server.send(hdl, response, websocketpp::frame::opcode::text);
+    std::string getValue(const std::string& msg, const std::string& key) {
+        size_t start = msg.find(key + ":");
+        if (start == std::string::npos) 
+            return "";
+        start += key.size() + 1;
+
+        size_t end = msg.find(";", start);
+        if (end == std::string::npos)
+            end = msg.size();
+
+        return msg.substr(start, end - start);
     }
 };
 

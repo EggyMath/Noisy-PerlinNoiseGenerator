@@ -6,13 +6,20 @@ statusEl.textContent = "Connecting...";
 ws.onopen = function () {
     console.log("Connected to C++ WebSocket++ server");
     statusEl.textContent = "Connected!";
+
+    ws.send("CMD:terrainNoise;");
+    ws.send("CMD:cloudsNoise;");
+    ws.send("CMD:waterNoise;");
+    ws.send("CMD:gasNoise;");
+
+    console.log("Requested: clouds, water, gas");
 };
 
 const canvas = document.getElementById("noiseCanvas");
 const ctx = canvas.getContext("2d");
 
-const perlinCanvas = document.getElementById("perlinCanvas");
-const perlinCtx = perlinCanvas.getContext("2d");
+const terrainCanvas = document.getElementById("terrainCanvas");
+const terrainCtx = terrainCanvas.getContext("2d");
 
 const cloudCanvas = document.getElementById("cloudCanvas");
 const cloudCtx = cloudCanvas.getContext("2d");
@@ -20,8 +27,8 @@ const cloudCtx = cloudCanvas.getContext("2d");
 const waterCanvas = document.getElementById("waterCanvas");
 const waterCtx = waterCanvas.getContext("2d");
 
-const alienCanvas = document.getElementById("gasCanvas");
-const alienCtx = alienCanvas.getContext("2d");
+const gasCanvas = document.getElementById("gasCanvas");
+const gasCtx = gasCanvas.getContext("2d");
 
 ws.onmessage = (event) => {
   try {
@@ -43,12 +50,12 @@ ws.onmessage = (event) => {
     let imgData;
     let ctxTarget;
 
-    if (msg.type === "white") {
+    if (msg.type === "white" || msg.type === "perlin" || msg.type === "simplex") {
       imgData = ctx.createImageData(payload.width, payload.height);
       ctxTarget = ctx;
-    } else if (msg.type === "perlin") {
-      imgData = perlinCtx.createImageData(payload.width, payload.height);
-      ctxTarget = perlinCtx;
+    } else if (msg.type === "terrain") {
+      imgData = terrainCtx.createImageData(payload.width, payload.height);
+      ctxTarget = terrainCtx;
     } else if (msg.type === "clouds") {
       imgData = cloudCtx.createImageData(payload.width, payload.height);
       ctxTarget = cloudCtx;
@@ -56,8 +63,8 @@ ws.onmessage = (event) => {
       imgData = waterCtx.createImageData(payload.width, payload.height);
       ctxTarget = waterCtx;
     } else if (msg.type === "gas") {
-        imgData = alienCtx.createImageData(payload.width, payload.height);
-        ctxTarget = alienCtx;
+        imgData = gasCtx.createImageData(payload.width, payload.height);
+        ctxTarget = gasCtx;
     } else {
       console.log("Unknown type:", msg.type);
       return;
@@ -67,13 +74,13 @@ ws.onmessage = (event) => {
       const v = payload.data[i];
       const j = i * 4;
 
-      if (msg.type === "white") {
+      if (msg.type === "white" || msg.type === "simplex" || msg.type === "perlin") {
         const c = v * 255;
         imgData.data[j + 0] = c;
         imgData.data[j + 1] = c;
         imgData.data[j + 2] = c;
         imgData.data[j + 3] = 255;
-      } else if (msg.type === "perlin") {
+      } else if (msg.type === "terrain") {
         let min = 999;
         let max = -999;
 
@@ -240,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sendBtn) {
         sendBtn.addEventListener("click", function () {
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send("whiteNoise");
+                ws.send("CMD:perlinNoise;");
             }
             else {
                 console.warn("WebSocket not open yet");
