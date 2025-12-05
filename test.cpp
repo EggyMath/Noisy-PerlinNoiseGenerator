@@ -149,7 +149,7 @@ private:
             clouds.create(
                 256, 256,
                 40.0f,
-                2024,
+                9999,
                 PerlinMode::BILLOW,
                 6,
                 2.0f,

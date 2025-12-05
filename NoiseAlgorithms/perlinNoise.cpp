@@ -2,7 +2,9 @@
 #include "perlinNoise.h"
 
 // Constructor
-perlinNoise::perlinNoise() : genericNoise() {}
+perlinNoise::perlinNoise() : genericNoise() {
+    perlinSeed = 0;
+}
 
 // Generate perline Noise grid
 void perlinNoise::create(unsigned int width, 
@@ -16,6 +18,8 @@ void perlinNoise::create(unsigned int width,
                          float warpStrength) {
     // Allocate memory with base class
     genericNoise::create(width, height, seed);
+
+    this->perlinSeed = seed;
 
     if (scale <= 0.0f) {
         scale = 0.0001f;
@@ -145,24 +149,20 @@ float perlinNoise::dotGridGradient(int ix, int iy, float x, float y) const {
 }
 
 math::Vec2 perlinNoise::randomGradient(int ix, int iy) const {
-    const unsigned int PRIME1 = 3284157443u;
-    const unsigned int PRIME2 = 1911520717u;
-    const unsigned int PRIME3 = 2048419325u;
+    const unsigned int PRIME1 = 0x9E3779B1;
+    const unsigned int PRIME2 = 0x85EBCA77;
+    const unsigned int PRIME3 = 0xC2B2AE3D;
 
-    const unsigned int BIT_COUNT = 8 * sizeof(unsigned int);
-    const unsigned int SHIFT = BIT_COUNT / 2;
+    unsigned int hash = (unsigned int)ix;
+    hash = hash ^ PRIME1;
+    hash = hash + (unsigned int)iy * PRIME2;
 
-    unsigned int hashX = ix;
-    hashX = hashX * PRIME1;
+    hash = hash ^ perlinSeed;
 
-    unsigned int hashY = iy;
-    hashY = hashY ^ ((hashX << SHIFT) | (hashX >> (BIT_COUNT - SHIFT)));
-    hashY = hashY * PRIME2;
+    hash = hash * PRIME3;
+    hash = hash ^ (hash >> 15);
 
-    unsigned int finalHash = hashX ^ ((hashY << SHIFT) | (hashY >> (BIT_COUNT - SHIFT)));
-    finalHash = finalHash * PRIME3;
-
-    float angle = (float)finalHash / (float)UINT32_MAX * 6.28318530718f;
+    float angle = (float)hash / (float)UINT32_MAX * 6.28318530718f;
 
     return math::Vec2(std::cos(angle), std::sin(angle));
 }

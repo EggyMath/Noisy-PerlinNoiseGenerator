@@ -145,6 +145,11 @@ class perlinNoise : public genericNoise {
          * @return A 2D unit vector representing the gradient direction
          */
         math::Vec2 randomGradient(int ix, int iy) const;
+
+        /**
+         * Stores the seed used for the perlin noise generation
+         */
+        unsigned int perlinSeed;
 };
 
 #endif
