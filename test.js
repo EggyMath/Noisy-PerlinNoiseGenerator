@@ -2,6 +2,7 @@ var ws = new WebSocket("ws://localhost:9002");
 
 const statusEl = document.getElementById("status");
 statusEl.textContent = "Connecting...";
+let lastPerlinPayload;
 
 ws.onopen = function () {
     console.log("Connected to C++ WebSocket++ server");
@@ -30,6 +31,15 @@ const waterCtx = waterCanvas.getContext("2d");
 const gasCanvas = document.getElementById("gasCanvas");
 const gasCtx = gasCanvas.getContext("2d");
 
+function hexToRGB(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255
+  };
+}
+
 ws.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
@@ -52,6 +62,7 @@ ws.onmessage = (event) => {
 
     if (msg.type === "white" || msg.type === "perlin" || msg.type === "simplex") {
       imgData = ctx.createImageData(payload.width, payload.height);
+      lastPerlinPayload = payload;
       ctxTarget = ctx;
     } else if (msg.type === "terrain") {
       imgData = terrainCtx.createImageData(payload.width, payload.height);
@@ -75,10 +86,16 @@ ws.onmessage = (event) => {
       const j = i * 4;
 
       if (msg.type === "white" || msg.type === "simplex" || msg.type === "perlin") {
-        const c = v * 255;
-        imgData.data[j + 0] = c;
-        imgData.data[j + 1] = c;
-        imgData.data[j + 2] = c;
+        const c0 = hexToRGB(colorStart.value);
+        const c1 = hexToRGB(colorEnd.value);
+
+        const r = c0.r + v * (c1.r - c0.r);
+        const g = c0.g + v * (c1.g - c0.g);
+        const b = c0.b + v * (c1.b - c0.b);
+
+        imgData.data[j + 0] = r;
+        imgData.data[j + 1] = g;
+        imgData.data[j + 2] = b;
         imgData.data[j + 3] = 255;
       } else if (msg.type === "terrain") {
         let min = 999;
@@ -288,6 +305,47 @@ document.addEventListener("DOMContentLoaded", function () {
   noiseSelect.addEventListener("change", updateOptionsVisibility);
   updateOptionsVisibility();
 });
+
+var colorStart = document.getElementById("colorStart");
+var colorEnd = document.getElementById("colorEnd");
+var gradientPreview = document.getElementById("gradientPreview");
+
+function updateGradient() {
+  gradientPreview.style.background =
+      `linear-gradient(to right, ${colorStart.value}, ${colorEnd.value})`;
+
+  if (!lastPerlinPayload) return;
+
+  const payload = lastPerlinPayload;
+  const w = payload.width;
+  const h = payload.height;
+  const data = payload.data;
+
+  const imgData = ctx.createImageData(w, h);
+
+  const c0 = hexToRGB(colorStart.value);
+  const c1 = hexToRGB(colorEnd.value);
+
+  for (let i = 0; i < data.length; i++) {
+      const v = data[i]; 
+      const j = i * 4;
+
+      const r = c0.r + v * (c1.r - c0.r);
+      const g = c0.g + v * (c1.g - c0.g);
+      const b = c0.b + v * (c1.b - c0.b);
+
+      imgData.data[j + 0] = r;
+      imgData.data[j + 1] = g;
+      imgData.data[j + 2] = b;
+      imgData.data[j + 3] = 255;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
+colorStart.addEventListener("input", updateGradient);
+colorEnd.addEventListener("input", updateGradient);
+updateGradient();
 
 const seedInput = document.getElementById('seedInput');
 const scaleInput = document.getElementById('scaleInput');
