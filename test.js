@@ -86,16 +86,32 @@ ws.onmessage = (event) => {
       const j = i * 4;
 
       if (msg.type === "white" || msg.type === "simplex" || msg.type === "perlin") {
-        const c0 = hexToRGB(colorStart.value);
-        const c1 = hexToRGB(colorEnd.value);
+        let a = gradientStops[0];
+        let b = gradientStops[gradientStops.length - 1];
 
-        const r = c0.r + v * (c1.r - c0.r);
-        const g = c0.g + v * (c1.g - c0.g);
-        const b = c0.b + v * (c1.b - c0.b);
+        for (let s = 0; s < gradientStops.length - 1; s++) {
+            const A = gradientStops[s];
+            const B = gradientStops[s + 1];
+
+            if (v >= A.pos && v <= B.pos) {
+                a = A;
+                b = B;
+                break;
+            }
+        }
+
+        const A = hexToRGB(a.color);
+        const B = hexToRGB(b.color);
+
+        const t = (v - a.pos) / (b.pos - a.pos);
+
+        const r = A.r + t * (B.r - A.r);
+        const g = A.g + t * (B.g - A.g);
+        const bval = A.b + t * (B.b - A.b);
 
         imgData.data[j + 0] = r;
         imgData.data[j + 1] = g;
-        imgData.data[j + 2] = b;
+        imgData.data[j + 2] = bval;
         imgData.data[j + 3] = 255;
       } else if (msg.type === "terrain") {
         let min = 999;
@@ -306,46 +322,160 @@ document.addEventListener("DOMContentLoaded", function () {
   updateOptionsVisibility();
 });
 
-var colorStart = document.getElementById("colorStart");
-var colorEnd = document.getElementById("colorEnd");
-var gradientPreview = document.getElementById("gradientPreview");
+let gradientStops = [];
 
-function updateGradient() {
-  gradientPreview.style.background =
-      `linear-gradient(to right, ${colorStart.value}, ${colorEnd.value})`;
+const stopsContainer = document.getElementById("gradientStops");
+const addStopBtn = document.getElementById("addStopBtn");
+const gradientPreview = document.getElementById("gradientPreview");
 
-  if (!lastPerlinPayload) return;
-
-  const payload = lastPerlinPayload;
-  const w = payload.width;
-  const h = payload.height;
-  const data = payload.data;
-
-  const imgData = ctx.createImageData(w, h);
-
-  const c0 = hexToRGB(colorStart.value);
-  const c1 = hexToRGB(colorEnd.value);
-
-  for (let i = 0; i < data.length; i++) {
-      const v = data[i]; 
-      const j = i * 4;
-
-      const r = c0.r + v * (c1.r - c0.r);
-      const g = c0.g + v * (c1.g - c0.g);
-      const b = c0.b + v * (c1.b - c0.b);
-
-      imgData.data[j + 0] = r;
-      imgData.data[j + 1] = g;
-      imgData.data[j + 2] = b;
-      imgData.data[j + 3] = 255;
-  }
-
-  ctx.putImageData(imgData, 0, 0);
+function initDefaultStops() {
+    gradientStops = [
+        { pos: 0.0, color: "#000000" },
+        { pos: 1.0, color: "#ffffff" }
+    ];
+    redrawStopsUI();
+    updateGradient();
 }
 
-colorStart.addEventListener("input", updateGradient);
-colorEnd.addEventListener("input", updateGradient);
-updateGradient();
+function redrawStopsUI() {
+    stopsContainer.innerHTML = "";
+
+    gradientStops.forEach((stop, i) => {
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const posInput = document.createElement("input");
+        posInput.type = "number";
+        posInput.min = 0;
+        posInput.max = 1;
+        posInput.step = 0.01;
+        posInput.value = stop.pos;
+        posInput.style.width = "60px";
+
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = stop.color;
+
+        const isFirst = (i === 0);
+        const isLast = (i === gradientStops.length - 1);
+        const isEndpoint = isFirst || isLast;
+
+        if (isFirst) stop.pos = 0.0;
+        if (isLast)  stop.pos = 1.0;
+
+        if (isEndpoint) {
+            posInput.value = stop.pos;
+            posInput.disabled = true;
+        }
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "X";
+        deleteBtn.style.width = "30px";
+
+        if (isEndpoint) {
+            deleteBtn.style.display = "none";
+        }
+
+        posInput.addEventListener("change", () => {
+            if (!isEndpoint) {
+                stop.pos = Math.min(1, Math.max(0, parseFloat(posInput.value)));
+                gradientStops.sort((a, b) => a.pos - b.pos);
+                redrawStopsUI();
+                updateGradient();
+            }
+        });
+
+        colorInput.addEventListener("input", () => {
+            stop.color = colorInput.value;
+            updateGradient();
+        });
+
+        deleteBtn.addEventListener("click", () => {
+            if (!isEndpoint) {
+                gradientStops.splice(i, 1);
+                gradientStops.sort((a, b) => a.pos - b.pos);
+                redrawStopsUI();
+                updateGradient();
+            }
+        });
+
+        row.appendChild(posInput);
+        row.appendChild(colorInput);
+        if (!isEndpoint) row.appendChild(deleteBtn);
+
+        stopsContainer.appendChild(row);
+    });
+}
+
+addStopBtn.addEventListener("click", () => {
+  if (gradientStops.length >= 12) {
+    return;
+  }
+  gradientStops.push({
+      pos: 0.5,
+      color: "#ffffff"
+  });
+  gradientStops.sort((a, b) => a.pos - b.pos);
+  redrawStopsUI();
+  updateGradient();
+});
+
+function updateGradient() {
+    const css = gradientStops
+        .map(s => `${s.color} ${s.pos * 100}%`)
+        .join(", ");
+
+    gradientPreview.style.background = `linear-gradient(to right, ${css})`;
+
+    if (!lastPerlinPayload) return;
+
+    const payload = lastPerlinPayload;
+    const w = payload.width;
+    const h = payload.height;
+
+    const imgData = ctx.createImageData(w, h);
+    const data = payload.data;
+
+    function sampleGradient(v) {
+        v = Math.max(0, Math.min(1, v));
+
+        for (let i = 0; i < gradientStops.length - 1; i++) {
+            const a = gradientStops[i];
+            const b = gradientStops[i + 1];
+
+            if (v >= a.pos && v <= b.pos) {
+                const t = (v - a.pos) / (b.pos - a.pos);
+                const A = hexToRGB(a.color);
+                const B = hexToRGB(b.color);
+
+                return {
+                    r: A.r + t * (B.r - A.r),
+                    g: A.g + t * (B.g - A.g),
+                    b: A.b + t * (B.b - A.b)
+                };
+            }
+        }
+
+        return hexToRGB(gradientStops[gradientStops.length - 1].color);
+    }
+
+    for (let i = 0; i < data.length; i++) {
+        const v = data[i];
+        const rgb = sampleGradient(v);
+
+        const j = i * 4;
+        imgData.data[j+0] = rgb.r;
+        imgData.data[j+1] = rgb.g;
+        imgData.data[j+2] = rgb.b;
+        imgData.data[j+3] = 255;
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+}
+
+initDefaultStops();
 
 const seedInput = document.getElementById('seedInput');
 const scaleInput = document.getElementById('scaleInput');
